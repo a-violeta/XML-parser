@@ -10,10 +10,13 @@ scriere(){
       if [[ $line =~ <([^/][^>]*)> ]]; then
         tag="${BASH_REMATCH[1]}"
         if [[ "$tag" == "$tag_adaugat" ]]; then
-	   #verific daca in el urmeaza de 2 ori acelasi tag?
+	   #verific daca in el urmeaza un tag fara continut folosind o functie sau ceva?
+    	   #bag tag ul de deschidere
+    	   #while line diferita de tag ul de inchidere:
 	   #in variabila noul_text introduc fiecare tag gasit
 	   #si in loc de content bag text de la tastatura
 	   #dupa orice tag deschis gasit verific daca urmeaza continut si daca da il inlocuiesc in var
+    	   #bag tag ul de inchidere
 	fi
       fi
    done
