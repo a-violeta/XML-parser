@@ -2,43 +2,48 @@
 
 # Funcție pentru verificarea validității unui fișier XML
 check_xml_validity() {
-    file=$1
-    stack=()  # Array pentru a ține evidența tag-urilor deschise
-    ok="1"
+
+    local file="$1"
+    stack=()  # Array pentru a ține evidența tag-urilor
+    ok=1
+
     # Citim fișierul linie cu linie
     while IFS= read -r line; do
         # Căutăm tag-urile deschise și închise în fiecare linie
-        while [[ $line =~ <([^/][^>]*)> ]]; do
+        while [[ $line =~ (<[^>]+>) ]]; do	#cat timp avem tag in line
             tag="${BASH_REMATCH[1]}"  # Extragem tag-ul
             line="${line/${BASH_REMATCH[0]}/}"  # Eliminăm tag-ul procesat din linie
-
             # Verificăm dacă este un tag de deschidere
-            if [[ ! "$tag" =~ ^/ ]]; then
+            if [[ ! "$tag" =~ "/" ]]; then
                 # Adăugăm tag-ul în stack (tag deschis)
                 stack+=("$tag")
+												#for el in "${stack[@]}"; do
+												#echo "$el"
+												#done
+												#echo -e "\n"
 	    else
 		#daca tag ul de inchidere gasit este identic ultimului tag din stack => il sterg din stack
 		tag_pereche=$(echo "$tag" | sed 's#</#<#')
-		echo "$tag_pereche"
-
 		last_element="${stack[-1]}" #bash versiunea 4.2
 		if [[ "$tag_pereche" == "$last_element" ]]; then
 		   unset 'stack[-1]'  # În Bash modern
-		   #sau poate stack-=("$tag_pereche")
 		else
-		   #echo "Fisierul nu este valid!"
-		   ok="0" #verificatorul
+		   ok=0 #verificatorul
+#echo "AICI: $tag"
 		   break
 		fi
-            fi #si daca nu e tag, e continut ce ii face?
+            fi
         done
     done < "$file"
 
     # Dacă la final stack-ul nu este gol, înseamnă că există tag-uri deschise neînchise
-    if [ ${#stack[@]} -ne 0 ] || [ ok == 0 ]; then
-        echo "Fișierul XML nu este valid: există tag-uri deschise neînchise."
+    if [ ${#stack[@]} -ne 0 ] || [ "$ok" == 0 ]; then
+        echo "Fișierul XML nu este valid."
+#echo "$ok"
         return 1
     fi
+
+#POT AVEA TAG URI GOALE? ALTFEL INCA O PARCURGERE CU CAUTARE "><"
 
     # Dacă toate tag-urile sunt corect închise și imbricate, fișierul este valid
     echo "Fișierul XML este valid."
@@ -47,66 +52,120 @@ check_xml_validity() {
 
 #de aici am parsarea
 
-# Funcție pentru procesarea unui obiect XML (tag care conține câmpuri și valori)
-process_object() {
-    tag=$1
-    # Căutăm câmpurile și valorile asociate tag-ului (presupunând că tag-urile sunt simple)
-    echo "tag-ul <$tag> este un obiect de tip <$tag> ce conține câmpurile și valorile:"
-
-    # Folosim xmllint pentru a obține toate câmpurile pentru tag-ul curent
-    xmllint --xpath "//$tag/*" $file | sed -n 's/<\([^>]*\)>/\1/p' | while read field; do
-        value=$(xmllint --xpath "string(//$tag/$field)" $file)
-        echo "  $field: $value"
-    done
-}
-
-# Funcție pentru procesarea unui array de tag-uri XML
-process_array() {
-    parent_tag=$1
-    nested_tag=$2
-    echo "tag-ul <$parent_tag> conține un array de tipul <$nested_tag>"
-
-    # Folosim xmllint pentru a parcurge toate elementele din array
-    items=$(xmllint --xpath "//$parent_tag/$nested_tag" $file | sed -n 's/<\([^>]*\)>/\1/p')
-
-    # Procesăm fiecare element din array ca un obiect
-    for item in $items; do
-        echo "Procesăm elementul din array: <$nested_tag> cu valoarea: $item"
-        process_object $nested_tag
-    done
-}
-
-# Funcție principală pentru parsarea fișierului XML
 parse_xml() {
-    file=$1
+    #local file="$1"
+    root=0
+    vector=()
+    repetitive_tags=()
+    found=0
+
+    mapfile -t lines < "$1"
+
+    for line in "${lines[@]}"; do
+#echo "procesam linia: $line"
+	if [[ $line =~ (<[^>]+>) ]]; then
+	    tag="${BASH_REMATCH[1]}"
+	    line="${line/${BASH_REMATCH[0]}/}"
+#echo "tag ul gasit este: $tag"
+	    vector+=("$tag")
+	    if [[ $line =~ (<[^>]+>) ]]; then
+		tag="${BASH_REMATCH[1]}"
+		vector+=("$tag")
+	    fi
+	fi
+    done
+
+    for ((i=0; i<${#vector[@]}-1; i++)); do
+#echo "$el"
+#aici verific ce elemente sunt vectori si le pun in... ceva doar cu elem unice.
+	current=${vector[$i]}
+	next=${vector[$i+1]}
+	#pun in next "/", daca e deja nu mi pasa
+	closing_next="</${next#<}"
+	if [ "$current" == "$closing_next"  ]; then
+	    repetitive_tags+=("$next")
+	fi
+    done
+#echo -e "\n"
+#for el in "${repetitive_tags[@]}"; do
+#echo "$el"
+#done
+echo -e "\n"
+echo "primul el din vector: ${repetitive_tags[0]}"
+
+    for line in "${lines[@]}"; do
+	if [[ $line =~ (<[^>]+>) ]]; then                               #mereu true, liniile contin tag uri
+        tag="${BASH_REMATCH[1]}"
+	fi
+
+	if [[ "$root" == 0 ]]; then
+	    echo "avem root de tip $tag ce contine:"
+	    root=1
+	else
+#echo "procesam linia: $line"
+	    count=$(echo "$line" | grep -o "<" | wc -l)
+#echo "count: $count"
+	    content=$(echo "$line" | sed -n 's/.*>\(.*\)<.*/\1/p')
+	    if [[ "$count" == 2 ]]; then
+		echo "tag ul $tag ce contine '$content'"
+	    else
+		if [[ ! "$tag" =~ "/" ]]; then				#tag deschidere si unic pe linie
+#		    (i++)						#stim poz lui in vector
+		    echo -e "\n"
+echo "$tag"									#if tag in repetitive_tags, echo "avem vector"
+		    found=0
+		    for ((i=0; i<${#repetitive_tags[@]}-1; i++)); do
+echo "avem $tag si il comparam cu ${repetitive_tags[$i]}"
+			if [ "${repetitive_tags[$i]}" == "$tag" ]; then
+			    unset 'repetitive_tags[$i]'
+			    found=1
+			    break
+			fi
+		    done
+		    if [ "$found" == 1 ]; then
+			echo "avem un vector de elemente de tip $tag:"
+		    fi
+			echo "avem obiectul de tip $tag ce contine mai departe:"
+#retine in vector toate tag urile de deschidere, eventual doar pe alea fara content, cu root?
+#if v[i+1]==v[i+2] avem array, else obiect. dar vectorul nu stie imbricarile mai complexe.
+#poti avea dezordine: people: students and workers mixed? nu
+#obiect in obiect? se poate, iar asa se strica conditia, arbore. sau facem vectorul de la 0 ca sa ia strict ...
+#SAU CAUT </tag><tag> IN VECTOR CU TOATE TAG URILE, retin in alt vect tag urile astea si cand le gasesc afisez mesaj
+#pot cauta secventa </tag><tag> si intr o variabila text cu tot documentul fara whitespaces
+		fi
+	    fi
+	fi
+    done
+
+#    file=$1
     # Extragem toate tag-urile unice din fișierul XML
-    tags=$(xmllint --xpath "//*[not(*)]" $file | sed -n 's/<\([^>]*\)>/\1/p' | sort | uniq)
+#    tags=$(xmllint --xpath "//*[not(*)]" $file | sed -n 's/<\([^>]*\)>/\1/p' | sort | uniq)
 
     # Adăugăm tag-ul root pentru a fi procesat
-    root_tag=$(xmllint --xpath "/*" $file | sed -n 's/<\([^>]*\)>/\1/p')
-    if [ ! -z "$root_tag" ]; then
-        tags="$root_tag $tags"
-    fi
+#    root_tag=$(xmllint --xpath "/*" $file | sed -n 's/<\([^>]*\)>/\1/p')
+#    if [ ! -z "$root_tag" ]; then
+#        tags="$root_tag $tags"
+#    fi
 
     # Procesăm tag-ul root cu un mesaj special
-    if [ "$root_tag" ]; then
-        echo "tag-ul <$root_tag> este tag-ul principal ce conține:"
-    fi
+#    if [ "$root_tag" ]; then
+#        echo "tag-ul <$root_tag> este tag-ul principal ce conține:"
+#    fi
 
     # Pentru fiecare tag, verificăm dacă este un array sau un obiect
-    for tag in $tags; do
+#    for tag in $tags; do
         # Verificăm dacă există un tag imediat următor de același tip (array)
-        next_tag=$(xmllint --xpath "//$tag[2]" $file | sed -n 's/<\([^>]*\)>/\1/p')
+#        next_tag=$(xmllint --xpath "//$tag[2]" $file | sed -n 's/<\([^>]*\)>/\1/p')
 
-        if [ "$next_tag" == "$tag" ]; then
+#        if [ "$next_tag" == "$tag" ]; then
             # Dacă există un alt tag de același tip, procesăm ca array
-            nested_tag=$tag
-            process_array $tag $nested_tag
-        else
+#            nested_tag=$tag
+#            process_array $tag $nested_tag
+#        else
             # Dacă nu există un alt tag, procesăm ca obiect
-            process_object $tag
-        fi
-    done
+#            process_object $tag
+#        fi
+#    done
 }
 
 #de aici urmeaza main practic
@@ -116,14 +175,11 @@ if [ $# -eq 0 ]; then
     echo "Vă rugăm să specificați un fișier XML."
     exit 1
 fi
-
-file=$1
-
 # Apelăm funcția pentru a verifica fișierul XML
-check_xml_validity $1
-if [ ok -eq 0 ]; then
+check_xml_validity "$1"
+if [ "$ok" == 0 ]; then
    echo "iesire."
    exit 1
 fi
 # Apelăm funcția principală pentru parsarea fișierului
-parse_xml $1
+parse_xml "$1"
