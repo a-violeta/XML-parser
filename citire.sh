@@ -54,33 +54,33 @@ check_xml_validity() {
 
 parse_xml() {
     #local file="$1"
-    root=0
-    vector=()
-    repetitive_tags=()
-    found=0
+    root=0 #variabila booleana ca sa stiu daca linia e root
+    vector=() #vector cu toate tag urile
+    repetitive_tags=() #vector pt tag urile care se repeta, adica sunt elemente intr un vector
+    found=0 #o variabila booleana
 
-    mapfile -t lines < "$1"
+    mapfile -t lines < "$1" #iterez prin liniile documentului de mai multe ori asa ca fac vector din linii ca sa le pot parcurge de cate ori vreau
 
     for line in "${lines[@]}"; do
 #echo "procesam linia: $line"
-	if [[ $line =~ (<[^>]+>) ]]; then
-	    tag="${BASH_REMATCH[1]}"
-	    line="${line/${BASH_REMATCH[0]}/}"
+	if [[ $line =~ (<[^>]+>) ]]; then #if linia are tag
+	    tag="${BASH_REMATCH[1]}" #iau tag ul
+	    line="${line/${BASH_REMATCH[0]}/}" #din linie elimin portiunea cu tag ul
 #echo "tag ul gasit este: $tag"
-	    vector+=("$tag")
-	    if [[ $line =~ (<[^>]+>) ]]; then
+	    vector+=("$tag") #adaug tag ul in vectorul de tag uri
+	    if [[ $line =~ (<[^>]+>) ]]; then #cam prostesc, dar daca mai am tag uri pe linie si vreau sa le adaug am pus doar if, while era mai bun. dar noi avem in general maxim 2 tag uri pe linie
 		tag="${BASH_REMATCH[1]}"
 		vector+=("$tag")
 	    fi
 	fi
     done
 
-    for ((i=0; i<${#vector[@]}-1; i++)); do
+    for ((i=0; i<${#vector[@]}-1; i++)); do #iterez prin vectorul de tag uri
 #echo "$el"
 #aici verific ce elemente sunt vectori si le pun in... ceva doar cu elem unice.
 	current=${vector[$i]}
 	next=${vector[$i+1]}
-	#pun in next "/", daca e deja nu mi pasa
+	#pun in 'next' caracterul "/", daca e deja nu mi pasa, doar verific daca sunt identice, primul inchis, al doilea deachis
 	closing_next="</${next#<}"
 	if [ "$current" == "$closing_next"  ]; then
 	    repetitive_tags+=("$next")
@@ -91,7 +91,7 @@ parse_xml() {
 #echo "$el"
 #done
 echo -e "\n"
-echo "primul el din vector: ${repetitive_tags[0]}"
+echo "primul el din vector: ${repetitive_tags[0]}" #verificam cum se lucreaza cu vectori
 
     for line in "${lines[@]}"; do
 	if [[ $line =~ (<[^>]+>) ]]; then                               #mereu true, liniile contin tag uri
