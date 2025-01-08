@@ -3,8 +3,8 @@
 # Funcție pentru verificarea validității unui fișier XML
 check_xml_validity() {
 
-    local file="$1"
-    stack=()  # Array pentru a ține evidența tag-urilor
+    local file="$1"	#$1 este primul parametru dat functiei, adica fisierul pe care l am redenumit file
+    stack=()  		# Array pentru a ține evidența tag-urilor, e rezolvarea problemei parantezarii
     ok=1
 
     # Citim fișierul linie cu linie
@@ -13,15 +13,15 @@ check_xml_validity() {
         while [[ $line =~ (<[^>]+>) ]]; do	#cat timp avem tag in line
             tag="${BASH_REMATCH[1]}"  # Extragem tag-ul
             line="${line/${BASH_REMATCH[0]}/}"  # Eliminăm tag-ul procesat din linie
-            # Verificăm dacă este un tag de deschidere
+            # Verificăm dacă este un tag de deschidere prin verificarea lipsei semnului "/"
             if [[ ! "$tag" =~ "/" ]]; then
-                # Adăugăm tag-ul în stack (tag deschis)
+                # Adăugăm tag-ul în stack (doar tag urile deschise)
                 stack+=("$tag")
-												#for el in "${stack[@]}"; do
+												#for el in "${stack[@]}"; do #for range based sau cum se numea, am verificat ce am in vector la fiecare pas
 												#echo "$el"
 												#done
 												#echo -e "\n"
-	    else
+	    else #clar am gasit un tag de inchidere
 		#daca tag ul de inchidere gasit este identic ultimului tag din stack => il sterg din stack
 		tag_pereche=$(echo "$tag" | sed 's#</#<#')
 		last_element="${stack[-1]}" #bash versiunea 4.2
