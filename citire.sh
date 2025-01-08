@@ -126,47 +126,17 @@ echo "avem $tag si il comparam cu ${repetitive_tags[$i]}"
 			echo "avem un vector de elemente de tip $tag:"
 		    fi
 			echo "avem obiectul de tip $tag ce contine mai departe:"
-#retine in vector toate tag urile de deschidere, eventual doar pe alea fara content, cu root?
-#if v[i+1]==v[i+2] avem array, else obiect. dar vectorul nu stie imbricarile mai complexe.
-#poti avea dezordine: people: students and workers mixed? nu
-#obiect in obiect? se poate, iar asa se strica conditia, arbore. sau facem vectorul de la 0 ca sa ia strict ...
+#retine in vector toate tag urile de deschidere, eventual doar pe alea fara content, si cu root deocamdata
+#if v[i+1]==v[i+2] avem array, else obiect. dar vectorul asta nu stie imbricarile mai complexe.
+#obiect in obiect? se poate, iar asa se strica conditia, arbore. sau refacem vectorul de fiecare data cand gasim tag
 #SAU CAUT </tag><tag> IN VECTOR CU TOATE TAG URILE, retin in alt vect tag urile astea si cand le gasesc afisez mesaj
 #pot cauta secventa </tag><tag> si intr o variabila text cu tot documentul fara whitespaces
+
+#pot sa caut in vectorul lines direct. modificari necesare
 		fi
 	    fi
 	fi
     done
-
-#    file=$1
-    # Extragem toate tag-urile unice din fișierul XML
-#    tags=$(xmllint --xpath "//*[not(*)]" $file | sed -n 's/<\([^>]*\)>/\1/p' | sort | uniq)
-
-    # Adăugăm tag-ul root pentru a fi procesat
-#    root_tag=$(xmllint --xpath "/*" $file | sed -n 's/<\([^>]*\)>/\1/p')
-#    if [ ! -z "$root_tag" ]; then
-#        tags="$root_tag $tags"
-#    fi
-
-    # Procesăm tag-ul root cu un mesaj special
-#    if [ "$root_tag" ]; then
-#        echo "tag-ul <$root_tag> este tag-ul principal ce conține:"
-#    fi
-
-    # Pentru fiecare tag, verificăm dacă este un array sau un obiect
-#    for tag in $tags; do
-        # Verificăm dacă există un tag imediat următor de același tip (array)
-#        next_tag=$(xmllint --xpath "//$tag[2]" $file | sed -n 's/<\([^>]*\)>/\1/p')
-
-#        if [ "$next_tag" == "$tag" ]; then
-            # Dacă există un alt tag de același tip, procesăm ca array
-#            nested_tag=$tag
-#            process_array $tag $nested_tag
-#        else
-            # Dacă nu există un alt tag, procesăm ca obiect
-#            process_object $tag
-#        fi
-#    done
-}
 
 #de aici urmeaza main practic
 
@@ -175,7 +145,7 @@ if [ $# -eq 0 ]; then
     echo "Vă rugăm să specificați un fișier XML."
     exit 1
 fi
-# Apelăm funcția pentru a verifica fișierul XML
+# Apelăm funcția pentru validare
 check_xml_validity "$1"
 if [ "$ok" == 0 ]; then
    echo "iesire."
