@@ -1,34 +1,35 @@
 #!/bin/bash
 
 # Funcție pentru verificarea validității unui fișier XML
+#validarea e practic verificarea imbricarii, ca ultimul tag deschis e primul inchis
 check_xml_validity() {
 
-    local file="$1"	#$1 este primul parametru dat functiei, adica fisierul pe care l am redenumit file
+    local file="$1"	#$1 este primul parametru dat functiei, se cheama argument si il ia din apelul functiei acre e la sfarsitul codului
     stack=()  		# Array pentru a ține evidența tag-urilor, e rezolvarea problemei parantezarii
-    ok=1
+    ok=1		#variabila booleana, verifica daca nu e buna imbricarea
 
     # Citim fișierul linie cu linie
     while IFS= read -r line; do
-        # Căutăm tag-urile deschise și închise în fiecare linie
+        # Căutăm tag-urile deschise și închise din fiecare linie
         while [[ $line =~ (<[^>]+>) ]]; do	#cat timp avem tag in line
             tag="${BASH_REMATCH[1]}"  # Extragem tag-ul
             line="${line/${BASH_REMATCH[0]}/}"  # Eliminăm tag-ul procesat din linie
-            # Verificăm dacă este un tag de deschidere prin verificarea lipsei semnului "/"
+            # Verificăm dacă este un tag de deschidere prin verificarea lipsei semnului "/" in tag
             if [[ ! "$tag" =~ "/" ]]; then
                 # Adăugăm tag-ul în stack (doar tag urile deschise)
                 stack+=("$tag")
-												#for el in "${stack[@]}"; do #for range based sau cum se numea, am verificat ce am in vector la fiecare pas
+												#for el in "${stack[@]}"; do #am verificat ce am in vector la fiecare pas la debugging
 												#echo "$el"
 												#done
 												#echo -e "\n"
-	    else #clar am gasit un tag de inchidere
-		#daca tag ul de inchidere gasit este identic ultimului tag din stack => il sterg din stack
-		tag_pereche=$(echo "$tag" | sed 's#</#<#')
-		last_element="${stack[-1]}" #bash versiunea 4.2
+	    else 			#clar am gasit un tag de inchidere
+					#daca tag ul de inchidere gasit este identic ultimului tag din stack => il sterg din stack
+		tag_pereche=$(echo "$tag" | sed 's#</#<#')	#in tag am un tag de inchidere, in stack am doar tag uri de deschidere, trebuie sa le compar asa ca fac tag_pereche care e tag ul de deschidere pt tag
+		last_element="${stack[-1]}"
 		if [[ "$tag_pereche" == "$last_element" ]]; then
-		   unset 'stack[-1]'  # În Bash modern
+		   unset 'stack[-1]'				#sterg ultimul elem din stack
 		else
-		   ok=0 #verificatorul
+		   ok=0						#verificatorul de imbricare corecta, cred ca e inutil, oricum verific la final daca stack e gol sau nu
 #echo "AICI: $tag"
 		   break
 		fi
@@ -36,14 +37,11 @@ check_xml_validity() {
         done
     done < "$file"
 
-    # Dacă la final stack-ul nu este gol, înseamnă că există tag-uri deschise neînchise
+    # Dacă la final stack-ul nu este gol sau ok e 0, înseamnă că există tag-uri deschise neînchise
     if [ ${#stack[@]} -ne 0 ] || [ "$ok" == 0 ]; then
         echo "Fișierul XML nu este valid."
-#echo "$ok"
         return 1
     fi
-
-#POT AVEA TAG URI GOALE? ALTFEL INCA O PARCURGERE CU CAUTARE "><"
 
     # Dacă toate tag-urile sunt corect închise și imbricate, fișierul este valid
     echo "Fișierul XML este valid."
