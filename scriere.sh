@@ -66,14 +66,9 @@ scriere() {
 	fi								#if se incheie cu fi, regula generala
 
 	if [[ "$tag" =~ "/" ]]; then					#if tag contine "/"
-	   #tag_pereche="$tag"
-	#else								#s ar putea sa fie o greseala de logica aici sau nu mai stiu eu ce am scris
-	   #tag_pereche="</${tag#<}"
-	#fi
-
-	   if [[ "$tag_pereche" == "$tag_adaugat_pereche" ]]; then	#if tag ul asta de inchidere e tag ul de inchidere al tag ului pe care il dublam
-	      adaugare=1							#am terminat cu succes crearea variabilei noul_text
-	      break								#for ul asta si a indeplinit scopul
+	   if [[ "$tag" == "$tag_adaugat_pereche" ]]; then		#if tag ul asta de inchidere e tag ul de inchidere al tag ului pe care il dublam
+	      adaugare=1						#am terminat cu succes crearea variabilei noul_text
+	      break							#for ul asta si a indeplinit scopul
        	   fi
 	fi
       else								#else: inca nu creez variabila noul_text, fie n am gasit tag ul de dublat, fie l am gasit si nu a fost corespunzator
