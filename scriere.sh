@@ -2,10 +2,10 @@
 
 #fac vector din liniile documentului, la prima iterare prin linii caut tag ul pe care o sa l 'dublez' si fac o variabila ce retine noul text pe care il pun in fisierul output
 #variabila noul_text: o sa aiba ceva de genul:
-<tag1>
-	<tag2>...</tag2>
- 	<tag3>...</tag3>
-</tag1>
+#<tag1>
+#	<tag2>...</tag2>
+# 	<tag3>...</tag3>
+#</tag1>
 #variabila se creaza concatenand linie cu linie in functie de cum arata tag ul original in document. practic doar ce cu '...' va fi diferit de tag ul din document, adica doar liniile cu content in interiorul tag urilor vor fi modificate, restul sunt doar copiate
 #la a doua iterare scriu toate liniile in output, dar cand gasesc sfarsitul tag ului pe care l am dublat, adaug in output variabila noul_text apoi adaug liniile ramase. asa stim sigur ca adaugam variabila noul_text unde are sens, la sfarsitul unui tag de acelasi tip
 #variabila adaugare: cand eu caut tag ul de dublat pentru a creea variabila noul_text
