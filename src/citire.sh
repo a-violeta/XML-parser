@@ -33,13 +33,13 @@ check_xml_validity() {
         return 1
     fi
 
-
     echo "Fișierul XML este valid."
     return 0
 }
 
 
 parse_xml() {
+
     is_root=0
     vector=()
     repetitive_tags=()
