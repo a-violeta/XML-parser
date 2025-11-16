@@ -1,6 +1,7 @@
 #!/bin/bash
 
 scriere() {
+
    if [[ ! -f "$1" ]]; then
       echo "Fisierul nu exista."
       return 1
@@ -8,6 +9,7 @@ scriere() {
 
    echo "Introduceti numele tag-ului pe care doriti sa-l adaugati: "
    read tag_adaugat
+   
    noul_text=$'\n'
    i=0
    adaugare=-1
