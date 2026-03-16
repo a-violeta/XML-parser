@@ -1,4 +1,5 @@
 # Script shell parsare fisiere xml
+Project for ITBI class, year 2024-2025.
 Citește și scrie date din, respectiv, în format `xml`. Este limitat la fisiere xml mai simpliste, un input complex poate genera rezultate eronate.
 
 ## Instalare
